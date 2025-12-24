@@ -9,7 +9,7 @@ def main():
     load_dotenv()
 
     api_key = os.environ.get("GEMINI_API_KEY")
-    if api_key == None:
+    if api_key is None:
         raise RuntimeError("API Key missing...")
 
     client = genai.Client(api_key=api_key)
@@ -24,7 +24,7 @@ def main():
     response = client.models.generate_content(
         model="gemini-2.5-flash", contents=messages
     )
-    if response.usage_metadata == None:
+    if response.usage_metadata is None:
         raise RuntimeError("API response usage metadata is empty")
     prompt_tokens = response.usage_metadata.prompt_token_count
     response_tokens = response.usage_metadata.candidates_token_count
