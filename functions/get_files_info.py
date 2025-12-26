@@ -1,7 +1,19 @@
+# functions/get_file_info.py
+
+
 import os
 
 
 def get_files_info(working_directory, directory=".") -> str:
+    """List files and directories within a specified directory with security validation and traversal protection.
+
+    Args:
+        working_directory (str): The base directory within which the target directory must reside.
+        directory (str): The relative path to the directory to list. Defaults to ".".
+
+    Returns:
+        str: A formatted string containing file information (name, size, is_dir), one per line. Returned string is an error message if validation fails or target is not a direcrtory.
+    """
     try:
         working_dir_abs: str = os.path.abspath(working_directory)
 
