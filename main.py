@@ -3,6 +3,8 @@ import os
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
+from prompts import system_prompt
+from config import model_name
 
 
 def main():
@@ -22,12 +24,16 @@ def main():
     messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash", contents=messages
+        model=model_name,
+        contents=messages,
+        config=types.GenerateContentConfig(system_instruction=system_prompt),
     )
     if response.usage_metadata is None:
         raise RuntimeError("API response usage metadata is empty")
+
     prompt_tokens = response.usage_metadata.prompt_token_count
     response_tokens = response.usage_metadata.candidates_token_count
+
     if args.verbose:
         print(f"User prompt: {args.user_prompt}")
         print(f"Prompt tokens: {prompt_tokens}")
