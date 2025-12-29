@@ -1,6 +1,25 @@
 # functions/run_python_file.py
 import os
 import subprocess as sp
+from google.genai import types
+
+schema_run_python_file = types.FunctionDeclaration(
+    name="run_python_file",
+    description="Runs a python file using a file path relative to the current working directory, and relates to the user information regarding the fucntion call's stdout and stderr.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="Path to read file from, relative to the working directory",
+            ),
+            "args": types.Schema(
+                type=types.Type.STRING,
+                description="Any arguments passed to the function (default is None)",
+            ),
+        },
+    ),
+)
 
 
 def run_python_file(working_directory, file_path, args=None) -> str:

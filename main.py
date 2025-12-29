@@ -5,6 +5,7 @@ from google.genai import types
 from dotenv import load_dotenv
 from prompts import system_prompt
 from config import model_name
+from functions.call_function import available_functions
 
 
 def main():
@@ -26,7 +27,9 @@ def main():
     response = client.models.generate_content(
         model=model_name,
         contents=messages,
-        config=types.GenerateContentConfig(system_instruction=system_prompt),
+        config=types.GenerateContentConfig(
+            tools=[available_functions], system_instruction=system_prompt
+        ),
     )
     if response.usage_metadata is None:
         raise RuntimeError("API response usage metadata is empty")
@@ -38,7 +41,11 @@ def main():
         print(f"User prompt: {args.user_prompt}")
         print(f"Prompt tokens: {prompt_tokens}")
         print(f"Response tokens: {response_tokens}")
-    print(f"Response:\n{response.text}")
+    if response.function_calls:
+        for function_call in response.function_calls:
+            print(f"Calling function: {function_call.name}({function_call.args})")
+    else:
+        print(f"Response:\n{response.text}")
 
 
 if __name__ == "__main__":
