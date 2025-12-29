@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -24,6 +25,16 @@ def main():
 
     messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
 
+    for _ in range(20):
+        done = generate_content(client, args, messages)
+        if done:
+            return
+
+    print("Error: Prompt failed to produce a result.")
+    sys.exit(1)
+
+
+def generate_content(client, args, messages):
     response = client.models.generate_content(
         model=model_name,
         contents=messages,
@@ -34,6 +45,10 @@ def main():
     if response.usage_metadata is None:
         raise RuntimeError("API response usage metadata is empty")
 
+    if response.candidates:
+        for candidate in response.candidates:
+            messages.append(candidate)
+
     prompt_tokens = response.usage_metadata.prompt_token_count
     response_tokens = response.usage_metadata.candidates_token_count
 
@@ -41,20 +56,25 @@ def main():
         print(f"User prompt: {args.user_prompt}")
         print(f"Prompt tokens: {prompt_tokens}")
         print(f"Response tokens: {response_tokens}")
-    if response.function_calls:
-        function_results = []
-        for function_call in response.function_calls:
-            function_call_result = call_function(function_call, args.verbose)
-            if not function_call_result.parts:
-                raise Exception("Error: function_call_result.parts is empty")
-            if not function_call_result.parts[0].function_response:
-                raise Exception("Error: .parts[0].function_response is empty")
-            function_results.append(function_call_result.parts[0])
 
-            if args.verbose:
-                print(f"-> {function_call_result.parts[0].function_response.response}")
-    else:
-        print(f"Response:\n{response.text}")
+    if not response.function_calls:
+        print("Response:")
+        print(response.text)
+        return True
+
+    function_responses = []
+    for function_call in response.function_calls:
+        result = call_function(function_call, args.verbose)
+        if not result.parts:
+            raise Exception("Error: function_call_result.parts is empty")
+        if not result.parts[0].function_response:
+            raise Exception("Error: .parts[0].function_response is empty")
+        function_responses.append(result.parts[0])
+
+        if args.verbose:
+            print(f"-> {result.parts[0].function_response.response}")
+    messages.append(types.Content(role="user", parts=function_responses))
+    return False
 
 
 if __name__ == "__main__":
